@@ -1,0 +1,89 @@
+[
+  {
+    "resume": {
+      "name": "Ananthu Anil",
+      "title": "Software Developer at Metal Morphosis | Masters student at Radboud University",
+      "summary": "Helping to bring awareness to cybersecurity and training youngsters in practical security challenges.",
+      "contact": {
+        "phone": "644769709",
+        "address": "Nijmegen, Gelderland, Netherlands",
+        "linkedin": "https://www.linkedin.com/in/ananthuanil13",
+        "email": "ananthuanil4u@gmail.com"
+      },
+      "experience": [
+        {
+          "company": "Bureau Veritas cybersecurity (Formerly Secura)AF",
+          "location": "Amsterdam",
+          "position": "Cybersecurity Intern",
+          "duration": "March 2025 - October 2025",
+          "responsibilities": [
+            "Developing a CI/CD pipeline to automate payload compilation and obfuscation for internal penetration testing.",
+            "Researching obfuscation techniques and EDR evasion strategies for .NET tools.",
+            "Implementing custom scripts (Python, Bash, PowerShell) for automated payload processing.",
+            "Leveraging Docker and containerization to standardize the build and testing environments.",
+            "Designing a scalable architecture with encryption and obfuscation for enhanced stealth.",
+            "Collaborating with the Red Team to refine pipeline features and document best practices."
+          ]
+        },
+        {
+          "company": "Metal Morphosis",
+          "location": "Gelderland",
+          "position": "Software Developer",
+          "duration": "November 2023 - April 2025",
+          "responsibilities": [
+            "Leading the conversion of a 16-bit DOS program to a 64-bit Windows application.",
+            "Utilizing QT framework and C++ to rewrite and optimize legacy C code.",
+            "Handling the entire development lifecycle independently.",
+            "Ensuring code maintainability and scalability using modern software engineering practices.",
+            "Planning to collaborate with cross-functional teams and contribute to technical documentation post-project."
+          ]
+        },
+        {
+          "company": "TNO",
+          "location": "The Hague",
+          "position": "Research Intern",
+          "duration": "August 2024 - February 2025",
+          "responsibilities": [
+            "Conducting research on developing a cybersecurity knowledge graph.",
+            "Mapping cybersecurity frameworks and standards (IEC 62443, NIS 2, ISO/IEC 27002:2022, NIST SP 800-53).",
+            "Implementing an ontology-based knowledge graph using OWL and RDF technologies.",
+            "Developing Python-based extraction pipelines using PyMuPDF and Pandas.",
+            "Evaluating use of LLMs to automate data extraction and cleaning processes.",
+            "Building a web tool using React and Flask to navigate compliance requirements.",
+            "Visualizing knowledge graphs using WebVOWL and enabling SPARQL queries.",
+            "Conducting experiments to assess data processing techniques.",
+            "Exploring enhancements like real-time updates and compliance scoring."
+          ]
+        },
+        {
+          "company": "KEMURI Technology",
+          "location": "Bengaluru",
+          "position": "System Engineer",
+          "duration": "January 2023 - May 2023",
+          "responsibilities": [
+            "Designed and optimized complex IT infrastructures.",
+            "Managed and troubleshot systems, networks, and servers.",
+            "Proactively identified technology gaps and implemented solutions."
+          ]
+        }
+      ],
+      "education": [
+        {
+          "institution": "APJ Abdul Kalam Technological University",
+          "duration": "January 2018 - December 2022",
+          "degree": "Bachelor of Technology in Computer Science",
+          "activities": [
+            "Founder - Official CTF Team",
+            "Performed multiple internships and certifications.",
+            "Runs an Ethical Hacking Community under ACM Student Chapter and a CTF team."
+          ]
+        },
+        {
+          "institution": "Radboud University",
+          "degree": "Master's degree, Cybersecurity",
+          "duration": "August 2023 - September 2026"
+        }
+      ]
+    }
+  }
+]

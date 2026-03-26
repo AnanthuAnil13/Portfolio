@@ -1,0 +1,6 @@
+# Folders
+./worktab/*a# Ignore local nested repo / workspace
+/worktab/
+
+# macOS Finder metadata
+.DS_Store
