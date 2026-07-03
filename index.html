@@ -1,15 +1,65 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js" data-page="home" data-app-loading="true">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ananthu Anil | Portfolio</title>
+  <script>
+    (function () {
+      const root = document.documentElement;
+      root.classList.remove("no-js");
+      root.classList.add("js");
+
+      try {
+        if (window.localStorage.getItem("theme") === "light") {
+          root.classList.add("light");
+        }
+      } catch (error) {
+        console.warn("Theme bootstrap skipped", error);
+      }
+
+      window.__portfolioBoot = window.__portfolioBoot || {
+        page: "home",
+        appLoading: true,
+        avatar: {
+          state: "idle",
+          progress: null,
+        },
+      };
+    })();
+  </script>
+  <link rel="preload" href="css/styles.css" as="style" />
+  <link rel="preload" href="assets/avatar/avatar-hero.v1.glb" as="fetch" crossorigin="anonymous" />
+  <link rel="modulepreload" href="js/vendor/three/three.module.js" />
+  <link rel="modulepreload" href="js/vendor/three/utils/BufferGeometryUtils.js" />
+  <link rel="modulepreload" href="js/vendor/three/loaders/GLTFLoader.js" />
   <link rel="stylesheet" href="css/styles.css" />
+  <noscript>
+    <style>
+      html[data-page="home"][data-app-loading="true"] [data-app-loader] {
+        display: none !important;
+      }
+    </style>
+  </noscript>
   <script defer src="js/script.js"></script>
   <script type="module" src="js/avatar-viewer.js"></script>
 </head>
 
-<body class="page">
+<body class="page page--home">
+  <div class="app-loader" data-app-loader role="status" aria-live="polite" aria-label="Loading portfolio">
+    <div class="app-loader__wash" aria-hidden="true"></div>
+    <div class="app-loader__track" aria-hidden="true">
+      <p>ANANTHU ANIL PORTFOLIO ANANTHU ANIL PORTFOLIO ANANTHU ANIL PORTFOLIO</p>
+      <p>CYBERSECURITY RESEARCHER SOFTWARE ENGINEER CYBERSECURITY RESEARCHER</p>
+    </div>
+    <div class="app-loader__panel">
+      <div class="app-loader__pill">
+        <span class="app-loader__label" data-loader-label>Loading portfolio</span>
+        <span class="app-loader__progress" data-loader-progress>0%</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Bar (transparent over dark hero) -->
   <header class="topbar topbar--hero">
     <div class="topbar-inner">
@@ -18,7 +68,7 @@
       <nav class="nav" aria-label="Primary">
         <a href="about.html">About</a>
         <a href="#thoughts">Work</a>
-        <a href="#archive">Archive</a>
+        <a href="#archive">Novel</a>
       </nav>
 
       <div class="controls">
@@ -27,7 +77,7 @@
           <div class="toggle" role="switch" tabindex="0" aria-checked="false" aria-label="Toggle dark mode" data-toggle></div>
         </div>
 
-        <div class="icon-badges" aria-hidden="true">
+        <!-- <div class="icon-badges" aria-hidden="true">
           <div class="badge" title="Play">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M9 7l10 5-10 5V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -45,7 +95,7 @@
               <path d="M9 7h6M9 11h6M9 15h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </header>
@@ -71,7 +121,7 @@
     <!-- Center: interactive 3D avatar -->
     <div class="cin-character">
       <div id="avatar-scene" class="cin-avatar-scene" aria-hidden="true"></div>
-      <p id="avatar-loading" class="cin-loader">Loading 3D avatar...</p>
+      <p id="avatar-loading" class="cin-loader is-hidden" aria-live="polite"></p>
     </div>
 
     <!-- Right: role title -->
@@ -134,7 +184,9 @@
       <div class="resume-modal__body">
         <iframe
           class="resume-modal__frame"
-          src="assets/resume.pdf"
+          data-resume-frame
+          data-src="assets/resume.pdf"
+          loading="lazy"
           title="Ananthu Anil resume"
         ></iframe>
       </div>

@@ -1,14 +1,55 @@
 (function () {
   const root = document.documentElement;
   const THEME_KEY = "theme";
+  const TRANSITION_KEY = "cursor-page-transition";
+  const PAGE_TRANSITION_MS = 720;
+  const NAVIGATE_DELAY_MS = 420;
+  const AVATAR_START_TIMEOUT_MS = 3200;
+  const HOME_PREFETCHES = [
+    { href: "about.html" },
+    { href: "assets/resume.json", as: "fetch" },
+    { href: "js/about.js", as: "script" },
+  ];
+  const THEME_BACKGROUND = {
+    dark: "#0a0a0e",
+    light: "#f5efe7",
+  };
 
-  // Apply saved theme
-  const saved = localStorage.getItem(THEME_KEY);
-  root.classList.toggle("light", saved === "light");
+  const boot = (window.__portfolioBoot = window.__portfolioBoot || {
+    page: root.dataset.page || "",
+    appLoading: root.dataset.appLoading === "true",
+    avatar: {
+      state: "idle",
+      progress: null,
+    },
+  });
 
-  // Mode toggle
+  const isHome = root.dataset.page === "home";
   const toggle = document.querySelector("[data-toggle]");
   const label = document.querySelector("[data-mode-label]");
+  const roleEl = document.querySelector("[data-role]");
+  const appLoader = document.querySelector("[data-app-loader]");
+  const loaderLabel = document.querySelector("[data-loader-label]");
+  const loaderProgress = document.querySelector("[data-loader-progress]");
+  const avatarScene = document.getElementById("avatar-scene");
+  const avatarStatus = document.getElementById("avatar-loading");
+  const resumeModal = document.querySelector("[data-resume-modal]");
+  const resumeOpenButton = document.querySelector("[data-resume-open]");
+  const resumeCloseButtons = document.querySelectorAll("[data-resume-close]");
+  const resumeFrame = document.querySelector("[data-resume-frame]");
+
+  let resumeFrameLoaded = Boolean(resumeFrame?.getAttribute("src"));
+  let homeBootDismissed = !isHome || !appLoader;
+  let homePrefetchQueued = false;
+  let avatarStartTimeoutId = 0;
+  let lastAvatarProgress = typeof boot.avatar?.progress === "number" ? boot.avatar.progress : 0;
+
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    root.classList.toggle("light", saved === "light");
+  } catch (error) {
+    console.warn("Theme restore skipped", error);
+  }
 
   function getTheme() {
     return root.classList.contains("light") ? "light" : "dark";
@@ -16,68 +57,180 @@
 
   function applyTheme(theme) {
     root.classList.toggle("light", theme === "light");
-    localStorage.setItem(THEME_KEY, theme);
+
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (error) {
+      console.warn("Theme persistence skipped", error);
+    }
+
     syncLabel();
   }
 
-  function syncLabel(){
+  function syncLabel() {
     const theme = getTheme();
     if (label) label.textContent = theme === "light" ? "Light" : "Dark";
     if (toggle) toggle.setAttribute("aria-checked", String(theme === "light"));
   }
 
+  function setLoaderCopy(labelText, progressText) {
+    if (loaderLabel && typeof labelText === "string") {
+      loaderLabel.textContent = labelText;
+    }
+
+    if (loaderProgress && typeof progressText === "string") {
+      loaderProgress.textContent = progressText;
+    }
+  }
+
+  function setInlineAvatarStatus(message) {
+    if (!avatarStatus) return;
+    avatarStatus.textContent = message;
+    avatarStatus.classList.toggle("is-hidden", message.length === 0);
+  }
+
+  function queueHomePrefetch() {
+    if (!isHome || homePrefetchQueued) return;
+    homePrefetchQueued = true;
+
+    const prefetch = function () {
+      for (const asset of HOME_PREFETCHES) {
+        if (document.head.querySelector(`link[rel="prefetch"][href="${asset.href}"]`)) {
+          continue;
+        }
+
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.href = asset.href;
+        if (asset.as) link.as = asset.as;
+        if (asset.as === "fetch") link.crossOrigin = "anonymous";
+        document.head.appendChild(link);
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(prefetch, { timeout: 1800 });
+      return;
+    }
+
+    window.setTimeout(prefetch, 900);
+  }
+
+  function completeHomeBoot(copy) {
+    if (!isHome) {
+      queueHomePrefetch();
+      return;
+    }
+
+    if (copy) {
+      setLoaderCopy(copy.label, copy.progress);
+    }
+
+    if (homeBootDismissed || !appLoader) {
+      queueHomePrefetch();
+      return;
+    }
+
+    homeBootDismissed = true;
+    boot.appLoading = false;
+    root.dataset.appLoading = "false";
+    appLoader.classList.add("is-complete");
+
+    window.setTimeout(function () {
+      appLoader.hidden = true;
+      root.removeAttribute("data-app-loading");
+      queueHomePrefetch();
+    }, 560);
+  }
+
+  function clearAvatarTimeouts() {
+    window.clearTimeout(avatarStartTimeoutId);
+  }
+
+  function handleAvatarProgress(event) {
+    const detail = event.detail || {};
+    if (typeof detail.progress === "number") {
+      lastAvatarProgress = detail.progress;
+    }
+
+    if (!isHome || homeBootDismissed) return;
+
+    const labelText =
+      detail.phase === "download" ? "Loading live avatar" : "Preparing portfolio";
+    const progressText =
+      typeof detail.progress === "number" ? `${detail.progress}%` : "Sync";
+
+    setLoaderCopy(labelText, progressText);
+  }
+
+  function handleAvatarReady() {
+    clearAvatarTimeouts();
+    root.dataset.avatarState = "ready";
+    if (avatarScene) avatarScene.classList.add("is-live");
+    setInlineAvatarStatus("");
+    completeHomeBoot({
+      label: "Entering portfolio",
+      progress: `${Math.max(lastAvatarProgress, 100)}%`,
+    });
+  }
+
+  function handleAvatarError(event) {
+    const detail = event.detail || {};
+    clearAvatarTimeouts();
+    root.dataset.avatarState = "error";
+    setInlineAvatarStatus(detail.message || "Live avatar failed to load.");
+    setLoaderCopy("Avatar failed to load", "Error");
+    if (appLoader) {
+      appLoader.setAttribute("aria-label", "Avatar failed to load");
+    }
+  }
+
+  syncLabel();
+
   if (toggle) {
-    toggle.addEventListener("click", () => {
+    toggle.addEventListener("click", function () {
       const nextTheme = getTheme() === "light" ? "dark" : "light";
       runThemeTransition(nextTheme);
     });
 
-    toggle.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
+    toggle.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
         toggle.click();
       }
     });
   }
 
-  syncLabel();
-
-  // Fallback hint if the 3D module fails to start
-  const avatarLoadingEl = document.getElementById("avatar-loading");
-  if (avatarLoadingEl) {
-    setTimeout(function () {
-      if (!window.__avatarViewerStarted) {
-        avatarLoadingEl.textContent = "3D viewer failed to start. Refresh and check console.";
-      }
-    }, 4000);
-  }
-
-  // Role cycling for cinematic hero
-  const roleEl = document.querySelector("[data-role]");
   if (roleEl) {
     const roles = [
       ["Cybersecurity", "Researcher"],
       ["Software", "Engineer"],
       ["Red Team", "Enthusiast"],
     ];
-    let i = 0;
-    setInterval(() => {
-      i = (i + 1) % roles.length;
+    let index = 0;
+
+    window.setInterval(function () {
+      index = (index + 1) % roles.length;
       roleEl.style.opacity = "0";
-      setTimeout(() => {
-        roleEl.innerHTML = roles[i].join("<br>");
+      window.setTimeout(function () {
+        roleEl.innerHTML = roles[index].join("<br>");
         roleEl.style.opacity = "1";
       }, 350);
     }, 3500);
   }
 
-  // Resume modal
-  const resumeModal = document.querySelector("[data-resume-modal]");
-  const resumeOpenButton = document.querySelector("[data-resume-open]");
-  const resumeCloseButtons = document.querySelectorAll("[data-resume-close]");
+  function ensureResumeFrameLoaded() {
+    if (!resumeFrame || resumeFrameLoaded) return;
+    const source = resumeFrame.dataset.src;
+    if (!source) return;
+
+    resumeFrame.src = source;
+    resumeFrameLoaded = true;
+  }
 
   function openResumeModal() {
     if (!resumeModal) return;
+    ensureResumeFrameLoaded();
     resumeModal.hidden = false;
     document.body.classList.add("resume-open");
     if (resumeOpenButton) resumeOpenButton.setAttribute("aria-expanded", "true");
@@ -87,6 +240,7 @@
     if (!resumeModal) return;
     resumeModal.hidden = true;
     document.body.classList.remove("resume-open");
+
     if (resumeOpenButton) {
       resumeOpenButton.setAttribute("aria-expanded", "false");
       resumeOpenButton.focus();
@@ -97,20 +251,43 @@
     resumeOpenButton.addEventListener("click", openResumeModal);
   }
 
-  resumeCloseButtons.forEach((button) => {
+  resumeCloseButtons.forEach(function (button) {
     button.addEventListener("click", closeResumeModal);
   });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && resumeModal && !resumeModal.hidden) {
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && resumeModal && !resumeModal.hidden) {
       closeResumeModal();
     }
   });
 
-  // ============================================================
-  // CURSOR — solid circle with mix-blend-mode: difference
-  // Inverts whatever colours sit beneath it automatically.
-  // ============================================================
+  if (isHome) {
+    setLoaderCopy("Loading portfolio", "0%");
+
+    window.addEventListener("portfolio:avatar-progress", handleAvatarProgress);
+    window.addEventListener("portfolio:avatar-ready", handleAvatarReady);
+    window.addEventListener("portfolio:avatar-error", handleAvatarError);
+
+    avatarStartTimeoutId = window.setTimeout(function () {
+      if (window.__avatarViewerStarted) return;
+
+      handleAvatarError({
+        detail: {
+          message: "Live avatar failed to start.",
+          code: "bootstrap-failed",
+        },
+      });
+    }, AVATAR_START_TIMEOUT_MS);
+
+    if (boot.avatar?.state === "ready") {
+      handleAvatarReady();
+    } else if (boot.avatar?.state === "error") {
+      handleAvatarError({ detail: boot.avatar });
+    } else if (boot.avatar?.state === "loading") {
+      handleAvatarProgress({ detail: boot.avatar });
+    }
+  }
+
   const cursor = document.createElement("div");
   cursor.className = "cursor-blob";
   document.body.appendChild(cursor);
@@ -121,45 +298,41 @@
   transitionOverlay.hidden = true;
   document.body.appendChild(transitionOverlay);
 
-  let curX = window.innerWidth  / 2;
+  let curX = window.innerWidth / 2;
   let curY = window.innerHeight / 2;
   let targetX = curX;
   let targetY = curY;
   const LERP = 0.12;
-  const TRANSITION_KEY = "cursor-page-transition";
-  const PAGE_TRANSITION_MS = 720;
-  const NAVIGATE_DELAY_MS = 420;
-  const THEME_BACKGROUND = {
-    dark: "#0a0a0e",
-    light: "#f5efe7",
-  };
-
   let visible = false;
 
-  function show() {
+  function showCursor() {
     if (!visible) {
       visible = true;
       cursor.classList.add("is-visible");
     }
   }
 
-  window.addEventListener("pointermove", (e) => {
-    targetX = e.clientX;
-    targetY = e.clientY;
-    show();
+  window.addEventListener("pointermove", function (event) {
+    targetX = event.clientX;
+    targetY = event.clientY;
+    showCursor();
 
-    // Grow slightly when hovering interactive elements
-    const tag = e.target.closest("a, button, [role='button'], [tabindex]");
-    cursor.classList.toggle("is-hovering", !!tag);
+    const target = event.target.closest("a, button, [role='button'], [tabindex]");
+    cursor.classList.toggle("is-hovering", Boolean(target));
   });
 
-  window.addEventListener("pointerleave", () => {
+  window.addEventListener("pointerleave", function () {
     cursor.classList.remove("is-visible");
     visible = false;
   });
 
-  window.addEventListener("pointerdown", () => cursor.classList.add("is-clicking"));
-  window.addEventListener("pointerup",   () => cursor.classList.remove("is-clicking"));
+  window.addEventListener("pointerdown", function () {
+    cursor.classList.add("is-clicking");
+  });
+
+  window.addEventListener("pointerup", function () {
+    cursor.classList.remove("is-clicking");
+  });
 
   function getOverlaySize(x, y) {
     const distances = [
@@ -168,7 +341,8 @@
       Math.hypot(x, window.innerHeight - y),
       Math.hypot(window.innerWidth - x, window.innerHeight - y),
     ];
-    return Math.ceil(Math.max(...distances) * 2);
+
+    return Math.ceil(Math.max.apply(null, distances) * 2);
   }
 
   function prepareOverlay(x, y) {
@@ -198,13 +372,13 @@
     let state;
     try {
       state = JSON.parse(raw);
-    } catch {
+    } catch (error) {
       sessionStorage.removeItem(TRANSITION_KEY);
+      console.warn("Page transition restore skipped", error);
       return;
     }
 
-    const currentPath = window.location.pathname;
-    if (state.pathname !== currentPath) return;
+    if (state.pathname !== window.location.pathname) return;
 
     sessionStorage.removeItem(TRANSITION_KEY);
     prepareOverlay(state.x, state.y);
@@ -212,8 +386,8 @@
     transitionOverlay.classList.add("is-active");
     document.body.classList.add("is-page-transitioning");
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
         transitionOverlay.classList.add("is-collapsing");
       });
     });
@@ -226,11 +400,11 @@
     transitionOverlay.hidden = false;
     document.body.classList.add("is-page-transitioning");
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame(function () {
       transitionOverlay.classList.add("is-active");
     });
 
-    window.setTimeout(() => {
+    window.setTimeout(function () {
       action();
       transitionOverlay.classList.add("is-collapsing");
     }, NAVIGATE_DELAY_MS);
@@ -242,19 +416,19 @@
     if (!toggle) return;
 
     const rect = toggle.getBoundingClientRect();
-    const x = rect.left + (rect.width / 2);
-    const y = rect.top + (rect.height / 2);
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
 
     prepareOverlay(x, y);
     transitionOverlay.style.background = getThemeTransitionFill(nextTheme);
     transitionOverlay.hidden = false;
     document.body.classList.add("is-page-transitioning");
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame(function () {
       transitionOverlay.classList.add("is-active");
     });
 
-    window.setTimeout(() => {
+    window.setTimeout(function () {
       applyTheme(nextTheme);
       transitionOverlay.classList.add("is-collapsing");
     }, NAVIGATE_DELAY_MS);
@@ -281,36 +455,41 @@
     prepareOverlay(x, y);
 
     if (url.pathname !== window.location.pathname) {
-      sessionStorage.setItem(TRANSITION_KEY, JSON.stringify({
-        pathname: url.pathname,
-        x,
-        y,
-      }));
+      sessionStorage.setItem(
+        TRANSITION_KEY,
+        JSON.stringify({
+          pathname: url.pathname,
+          x,
+          y,
+        })
+      );
 
       transitionOverlay.hidden = false;
       document.body.classList.add("is-page-transitioning");
-      requestAnimationFrame(() => {
+      requestAnimationFrame(function () {
         transitionOverlay.classList.add("is-active");
       });
 
-      window.setTimeout(() => {
+      window.setTimeout(function () {
         window.location.assign(url.href);
       }, NAVIGATE_DELAY_MS);
+
       return;
     }
 
-    runLocalTransition(() => {
-      if (url.hash) {
-        const target = document.querySelector(url.hash);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        window.history.replaceState(null, "", url.hash);
+    runLocalTransition(function () {
+      if (!url.hash) return;
+
+      const target = document.querySelector(url.hash);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+
+      window.history.replaceState(null, "", url.hash);
     });
   }
 
-  document.querySelectorAll(".nav").forEach((nav) => {
+  document.querySelectorAll(".nav").forEach(function (nav) {
     nav.addEventListener("click", handleNavTransition);
   });
 
@@ -322,5 +501,4 @@
     curY += (targetY - curY) * LERP;
     cursor.style.transform = `translate(${curX}px, ${curY}px) translate(-50%, -50%)`;
   })();
-
 })();

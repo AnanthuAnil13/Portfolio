@@ -1,23 +1,77 @@
-import * as THREE from "https://esm.sh/three@0.161.0";
-import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GLTFLoader.js";
+import * as THREE from "./vendor/three/three.module.js";
+import { GLTFLoader } from "./vendor/three/loaders/GLTFLoader.js";
 
 (function () {
   window.__avatarViewerStarted = true;
+
+  const AVATAR_MODEL_URL = "assets/avatar/avatar-hero.v1.glb";
   const container = document.getElementById("avatar-scene");
   if (!container) return;
 
+  const boot = (window.__portfolioBoot = window.__portfolioBoot || {
+    avatar: {
+      state: "idle",
+      progress: null,
+    },
+  });
   const loadingEl = document.getElementById("avatar-loading");
-  function setLoading(message) {
+
+  function setStatus(message) {
     if (!loadingEl) return;
     loadingEl.textContent = message;
     loadingEl.classList.toggle("is-hidden", message.length === 0);
   }
 
+  function updateBootAvatar(state, detail) {
+    boot.avatar = {
+      ...(boot.avatar || {}),
+      ...detail,
+      state,
+    };
+  }
+
+  function emitAvatarEvent(type, detail) {
+    const state =
+      type === "portfolio:avatar-ready"
+        ? "ready"
+        : type === "portfolio:avatar-error"
+          ? "error"
+          : "loading";
+
+    updateBootAvatar(state, detail);
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+  }
+
+  function emitAvatarProgress(detail) {
+    const progress =
+      detail.total && detail.total > 0
+        ? Math.round((detail.loaded / detail.total) * 100)
+        : detail.progress ?? null;
+
+    emitAvatarEvent("portfolio:avatar-progress", {
+      ...detail,
+      progress,
+      modelUrl: AVATAR_MODEL_URL,
+    });
+  }
+
+  function emitAvatarError(message, detail = {}) {
+    emitAvatarEvent("portfolio:avatar-error", {
+      ...detail,
+      message,
+      modelUrl: AVATAR_MODEL_URL,
+    });
+  }
+
   if (window.location.protocol === "file:") {
-    setLoading("Run from a local server (http://localhost), not file://");
+    const message = "Run this site through a local server to enable the live avatar.";
+    setStatus(message);
+    emitAvatarError(message, { code: "file-protocol" });
+    return;
   }
 
   let renderer;
+
   try {
     renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -26,10 +80,14 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
     });
   } catch (error) {
     console.error("Failed to initialize WebGL renderer", error);
-    setLoading("WebGL is unavailable.");
+    setStatus("WebGL is unavailable.");
+    emitAvatarError("WebGL is unavailable.", {
+      code: "webgl-unavailable",
+    });
     return;
   }
 
+  renderer.domElement.className = "cin-avatar-canvas";
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -47,7 +105,6 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
   camera.position.set(0, 1.42, 5.2);
   camera.lookAt(0, 0, 0);
 
-  // Layered lights keep skin readable while preserving the dramatic hero look.
   scene.add(new THREE.HemisphereLight(0xffffff, 0x2a1646, 0.9));
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -76,9 +133,6 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
   const HEAD_PITCH_LIMIT = THREE.MathUtils.degToRad(14);
   const EYE_YAW_SCALE = 0.45;
   const EYE_PITCH_SCALE = 0.45;
-  // Direction multipliers: set to -1 to invert an axis.
-  const YAW_DIRECTION = 1;
-  const PITCH_DIRECTION = 1;
 
   let mixer = null;
   let loadedAvatar = null;
@@ -101,16 +155,8 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
     const x = (clientX / window.innerWidth) * 2 - 1;
     const y = (clientY / window.innerHeight) * 2 - 1;
 
-    lookState.targetYaw = clamp(
-      x * HEAD_YAW_LIMIT * YAW_DIRECTION,
-      -HEAD_YAW_LIMIT,
-      HEAD_YAW_LIMIT
-    );
-    lookState.targetPitch = clamp(
-      y * HEAD_PITCH_LIMIT * PITCH_DIRECTION,
-      -HEAD_PITCH_LIMIT,
-      HEAD_PITCH_LIMIT
-    );
+    lookState.targetYaw = clamp(x * HEAD_YAW_LIMIT, -HEAD_YAW_LIMIT, HEAD_YAW_LIMIT);
+    lookState.targetPitch = clamp(y * HEAD_PITCH_LIMIT, -HEAD_PITCH_LIMIT, HEAD_PITCH_LIMIT);
   }
 
   window.addEventListener("pointermove", function (event) {
@@ -147,7 +193,6 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
     modelRoot.position.sub(initialCenter);
     modelRoot.scale.setScalar(scale);
 
-    // Keep the full model centered in frame instead of pinning its base to a floor.
     const fittedBox = new THREE.Box3().setFromObject(modelRoot);
     const fittedCenter = fittedBox.getCenter(new THREE.Vector3());
     modelRoot.position.sub(fittedCenter);
@@ -176,8 +221,10 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
   }
 
   const loader = new GLTFLoader();
+  emitAvatarProgress({ phase: "boot", progress: 0, loaded: 0, total: 0 });
+
   loader.load(
-    "./avatar.glb",
+    AVATAR_MODEL_URL,
     function (gltf) {
       const avatar = gltf.scene;
       loadedAvatar = avatar;
@@ -213,21 +260,44 @@ import { GLTFLoader } from "https://esm.sh/three@0.161.0/examples/jsm/loaders/GL
         eyeBaseQuaternions.set(eyeBone, eyeBone.quaternion.clone());
       }
 
-      setLoading("");
+      container.classList.add("is-live");
+      setStatus("");
+      renderer.render(scene, camera);
+
+      const readyDetail = {
+        phase: "ready",
+        progress: 100,
+        modelUrl: AVATAR_MODEL_URL,
+      };
+
+      updateBootAvatar("ready", readyDetail);
+
+      window.requestAnimationFrame(function () {
+        window.dispatchEvent(new CustomEvent("portfolio:avatar-ready", { detail: readyDetail }));
+      });
     },
     function (event) {
-      if (!loadingEl) return;
       if (!event.total) {
-        setLoading("Loading 3D avatar...");
+        emitAvatarProgress({
+          phase: "download",
+          loaded: event.loaded || 0,
+          total: 0,
+        });
         return;
       }
 
-      const progress = Math.round((event.loaded / event.total) * 100);
-      setLoading("Loading 3D avatar... " + progress + "%");
+      emitAvatarProgress({
+        phase: "download",
+        loaded: event.loaded,
+        total: event.total,
+      });
     },
     function (error) {
-      console.error("Failed to load avatar.glb", error);
-      setLoading("Could not load avatar.glb. Start a local HTTP server.");
+      console.error("Failed to load avatar model", error);
+      setStatus("Live avatar failed to load.");
+      emitAvatarError("Live avatar failed to load.", {
+        code: "load-failed",
+      });
     }
   );
 

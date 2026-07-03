@@ -4,6 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ananthu Anil | About</title>
+  <script>
+    (function () {
+      try {
+        if (window.localStorage.getItem("theme") === "light") {
+          document.documentElement.classList.add("light");
+        }
+      } catch (error) {
+        console.warn("Theme bootstrap skipped", error);
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="css/styles.css" />
   <script defer src="js/script.js"></script>
   <script defer src="js/about.js"></script>
@@ -97,7 +108,9 @@
       <div class="resume-modal__body">
         <iframe
           class="resume-modal__frame"
-          src="assets/resume.pdf"
+          data-resume-frame
+          data-src="assets/resume.pdf"
+          loading="lazy"
           title="Ananthu Anil resume"
         ></iframe>
       </div>
