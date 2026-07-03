@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light;
+  --surface-0: #f5efe6;
+  --surface-1: #fffaf2;
+  --surface-2: rgba(255, 255, 255, 0.72);
+  --surface-3: rgba(129, 89, 54, 0.12);
+  --border-soft: rgba(61, 40, 22, 0.12);
+  --border-strong: rgba(61, 40, 22, 0.22);
+  --text-strong: #1f1710;
+  --text-body: #564337;
+  --text-muted: #836b59;
+  --accent: #b85c38;
+  --accent-deep: #8d3f22;
+  --accent-soft: #f3d7c2;
+  --shadow-lg: 0 24px 60px rgba(60, 33, 10, 0.13);
+  --shadow-md: 0 18px 30px rgba(60, 33, 10, 0.08);
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --page-glow: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 32%);
+  --page-background: linear-gradient(180deg, #f7f1e8 0%, #f0e3d4 100%);
+  --link-surface: rgba(255, 255, 255, 0.68);
+  --link-surface-hover: rgba(255, 255, 255, 0.84);
+  --card-background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 248, 239, 0.88) 100%);
+  --tag-background: rgba(255, 255, 255, 0.66);
+  --meta-background: rgba(255, 255, 255, 0.72);
+  --action-primary-text: #fff8f2;
+  --status-info-text: #27455f;
+  --status-info-surface: rgba(221, 239, 251, 0.72);
+  --status-info-border: rgba(39, 69, 95, 0.14);
+  --status-error-text: #7a2f1e;
+  --status-error-surface: rgba(255, 222, 213, 0.85);
+  --status-error-border: rgba(122, 47, 30, 0.16);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--page-background);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  color: var(--text-body);
+  background:
+    var(--page-glow),
+    var(--page-background);
+  transition:
+    background 220ms ease,
+    color 220ms ease;
+}
+
+body.theme-dark {
+  color-scheme: dark;
+  --surface-0: #1a1412;
+  --surface-1: #241b18;
+  --surface-2: rgba(46, 34, 29, 0.78);
+  --surface-3: rgba(215, 141, 94, 0.16);
+  --border-soft: rgba(236, 201, 176, 0.12);
+  --border-strong: rgba(236, 201, 176, 0.28);
+  --text-strong: #f6e8dc;
+  --text-body: #d4bcae;
+  --text-muted: #b8947e;
+  --accent: #cf7b4e;
+  --accent-deep: #f0a06f;
+  --accent-soft: rgba(207, 123, 78, 0.18);
+  --shadow-lg: 0 28px 70px rgba(5, 2, 1, 0.42);
+  --shadow-md: 0 18px 34px rgba(5, 2, 1, 0.28);
+  --page-glow: radial-gradient(circle at top left, rgba(207, 123, 78, 0.16), transparent 28%);
+  --page-background: linear-gradient(180deg, #120e0d 0%, #1d1613 48%, #271b16 100%);
+  --link-surface: rgba(43, 32, 27, 0.92);
+  --link-surface-hover: rgba(55, 41, 35, 0.98);
+  --card-background: linear-gradient(180deg, rgba(36, 27, 24, 0.96) 0%, rgba(24, 19, 17, 0.94) 100%);
+  --tag-background: rgba(255, 255, 255, 0.04);
+  --meta-background: rgba(255, 255, 255, 0.03);
+  --action-primary-text: #1b130f;
+  --status-info-text: #b7d8f0;
+  --status-info-surface: rgba(26, 52, 72, 0.58);
+  --status-info-border: rgba(125, 175, 209, 0.2);
+  --status-error-text: #ffc4b4;
+  --status-error-surface: rgba(98, 36, 28, 0.54);
+  --status-error-border: rgba(255, 173, 150, 0.18);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}

@@ -1,0 +1,79 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workdb
+    username: ananthuanil
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+app:
+  cors:
+    allowed-origin: http://localhost:4200
+
+  github:
+    token: ${GITHUB_TOKEN:}
+
+  gitlab:
+    token: ${GITLAB_TOKEN:}
+
+  sources:
+    repos:
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: D-fence
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: DigiFenZ
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: GeographQL-Explorer_Ember.js-Application
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Wordpress-Creation-Script-with-Docker
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Software-Security-Fuzzing-Project
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Oil-Data
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Startup-Mahostav-Web-Template
+        branch: main
+        readmePath: README.md
+
+      # Replace this with the real repo name, or remove it for now.
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Portfolio
+        branch: main
+        readmePath: README.md
+
+      - source: github
+        ownerOrNamespace: ananthuanil13
+        repoName: Web-Technology-Assignment-2-Question-7
+        branch: main
+        readmePath: README.md

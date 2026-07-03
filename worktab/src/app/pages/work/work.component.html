@@ -1,0 +1,131 @@
+<section class="work-page">
+  <div class="page-controls">
+    <a
+      class="back-link"
+      href="http://localhost:5500/index.html"
+      aria-label="Back to portfolio home">
+      <span class="back-link__icon" aria-hidden="true">←</span>
+      <span>Back</span>
+    </a>
+
+    <button
+      type="button"
+      class="theme-toggle"
+      (click)="toggleTheme()"
+      [attr.aria-pressed]="isDarkMode">
+      <span class="theme-toggle__icon" aria-hidden="true">
+        {{ isDarkMode ? '☀' : '☾' }}
+      </span>
+      <span>{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
+    </button>
+  </div>
+
+  <header class="work-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Portfolio</p>
+      <h1>Projects pulled from GitHub, shaped into a cleaner work archive.</h1>
+      <p class="hero-summary">
+        This Angular page loads project data from my Spring Boot API, then renders each
+        repository as a card with metadata, tags, and outbound links.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="refreshProjects()"
+      [disabled]="refreshing">
+      {{ refreshing ? 'Refreshing...' : 'Refresh Projects' }}
+    </button>
+  </header>
+
+  <div *ngIf="loading" class="status-banner status-banner--info">
+    Loading projects...
+  </div>
+
+  <div *ngIf="error" class="status-banner status-banner--error">
+    {{ error }}
+  </div>
+
+  <section class="projects-grid" *ngIf="!loading && !error">
+    <article
+      class="project-card"
+      *ngFor="let project of projects; trackBy: trackByProjectId">
+      <div
+        class="project-media"
+        [class.project-media--placeholder]="!hasValidImage(project)">
+        <img
+          *ngIf="hasValidImage(project)"
+          [src]="project.imageUrl"
+          [alt]="project.title"
+          class="project-image" />
+
+        <div *ngIf="!hasValidImage(project)" class="project-placeholder">
+          <span>{{ project.repoName }}</span>
+        </div>
+      </div>
+
+      <div class="project-content">
+        <div class="project-topline">
+          <span class="source-pill">{{ project.source }}</span>
+          <span class="status-pill">{{ project.status }}</span>
+        </div>
+
+        <div class="project-heading">
+          <h2>{{ project.title }}</h2>
+          <p class="repo-label">
+            {{ project.ownerOrNamespace }}/{{ project.repoName }}
+          </p>
+        </div>
+
+        <p class="project-description">
+          {{ project.description }}
+        </p>
+
+        <dl class="project-meta">
+          <div>
+            <dt>Category</dt>
+            <dd>{{ project.category }}</dd>
+          </div>
+          <div>
+            <dt>Platform</dt>
+            <dd>{{ project.platform }}</dd>
+          </div>
+          <div>
+            <dt>Year</dt>
+            <dd>{{ project.year }}</dd>
+          </div>
+          <div>
+            <dt>Visibility</dt>
+            <dd>{{ project.visibility }}</dd>
+          </div>
+        </dl>
+
+        <div class="tag-row" *ngIf="project.tags.length">
+          <span class="tag-chip" *ngFor="let tag of project.tags">
+            {{ tag }}
+          </span>
+        </div>
+
+        <div class="project-actions">
+          <a
+            class="action-link action-link--secondary"
+            [href]="project.repoUrl"
+            target="_blank"
+            rel="noopener">
+            Repository
+          </a>
+
+          <a
+            *ngIf="project.liveUrl"
+            class="action-link action-link--primary"
+            [href]="project.liveUrl"
+            target="_blank"
+            rel="noopener">
+            Live Demo
+          </a>
+        </div>
+      </div>
+    </article>
+  </section>
+</section>

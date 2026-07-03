@@ -1,0 +1,46 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Worktab Gitignore
+# Compiled output
+/worktab/dist
+/worktab/tmp
+/worktab/out-tsc
+/worktab/bazel-out
+
+# Node
+/worktab/node_modules
+/worktab/npm-debug.log
+/worktab/yarn-error.log
+
+# IDEs and editors
+/worktab/.idea/
+/worktab/.project
+/worktab/.classpath
+/worktab/.c9/
+/worktab/*.launch
+/worktab/.settings/
+/worktab/*.sublime-workspace
+
+# Visual Studio Code
+/worktab/.vscode/*
+!/worktab/.vscode/settings.json
+!/worktab/.vscode/tasks.json
+!/worktab/.vscode/launch.json
+!/worktab/.vscode/extensions.json
+!/worktab/.vscode/mcp.json
+/worktab/.history/*
+
+# Miscellaneous
+/worktab/.angular/cache
+/worktab/.sass-cache/
+/worktab/connect.lock
+/worktab/coverage
+/worktab/libpeerconnection.log
+/worktab/testem.log
+/worktab/typings
+/worktab/__screenshots__/
+
+# System files
+/worktab/.DS_Store
+/worktab/Thumbs.db
+/worktab/backend/.env.local
