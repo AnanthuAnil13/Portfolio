@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
+import { catchError, finalize, of, switchMap, timeout } from 'rxjs';
 import { ProjectService } from '../../services/project.service';
 import { Project } from '../../models/project.model';
 
@@ -24,6 +25,7 @@ export class WorkComponent implements OnInit {
   ngOnInit(): void {
     this.initializeTheme();
     this.loadProjects();
+    // this.refreshProjects();
   }
 
   loadProjects(): void {
